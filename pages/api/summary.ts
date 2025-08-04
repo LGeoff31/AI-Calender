@@ -46,12 +46,50 @@ export default async function handler(
   const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
   const now = new Date();
-  const timeMin = new Date(
-    now.getTime() - 60 * 24 * 60 * 60 * 1000
-  ).toISOString();
-  const timeMax = new Date(
-    now.getTime() + 30 * 24 * 60 * 60 * 1000
-  ).toISOString();
+
+  let timeMin: string;
+  let timeMax: string;
+
+  const monthParam = req.query.month;
+  const yearParam = req.query.year;
+  const monthNum = Array.isArray(monthParam)
+    ? parseInt(monthParam[0] || "", 10)
+    : parseInt((monthParam as string) || "", 10);
+  const yearNum = Array.isArray(yearParam)
+    ? parseInt(yearParam[0] || "", 10)
+    : parseInt((yearParam as string) || "", 10);
+
+  if (
+    !isNaN(monthNum) &&
+    !isNaN(yearNum) &&
+    monthNum >= 1 &&
+    monthNum <= 12 &&
+    yearNum > 1900
+  ) {
+    const start = new Date(Date.UTC(yearNum, monthNum - 1, 1, 0, 0, 0));
+    const end = new Date(Date.UTC(yearNum, monthNum, 0, 23, 59, 59));
+    timeMin = start.toISOString();
+    timeMax = end.toISOString();
+  } else {
+    const pastDays = (() => {
+      const q = req.query.past;
+      if (Array.isArray(q)) return parseInt(q[0] || "", 10) || 60;
+      return parseInt((q as string) || "", 10) || 60;
+    })();
+
+    const futureDays = (() => {
+      const q = req.query.future;
+      if (Array.isArray(q)) return parseInt(q[0] || "", 10) || 30;
+      return parseInt((q as string) || "", 10) || 30;
+    })();
+
+    timeMin = new Date(
+      now.getTime() - pastDays * 24 * 60 * 60 * 1000
+    ).toISOString();
+    timeMax = new Date(
+      now.getTime() + futureDays * 24 * 60 * 60 * 1000
+    ).toISOString();
+  }
 
   try {
     const resp = await calendar.events.list({
@@ -64,18 +102,26 @@ export default async function handler(
     });
     console.log("reached");
     const events = resp.data.items || [];
-    console.log("geoff", events);
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     console.log(events);
     const systemPrompt =
-      "You are a helpful assistant who summarizes Google Calendar events for the user in a concise human-friendly way.";
-    const userPrompt = `Please provide a concise summary of all the events. The events are provided as JSON:\n${JSON.stringify(
-      events
-    )}\n\nFocus on important meetings, milestones, and busy days. Output 5-7 bullet points.`;
+      "You are a lifestyle coach AI who infers a person's interests, habits, and preferences from their Google Calendar events, then produces friendly, constructive insights about their lifestyle. Avoid mentioning you read JSON; write naturally to the user.";
+
+    const userPrompt = `Below is this person's calendar data in JSON:
+${JSON.stringify(events)}
+
+Based on the event titles, locations, and frequencies, infer:
+1. Likely interests/hobbies
+2. Typical work patterns & workload
+3. Health / wellness tendencies (exercise, rest)
+4. Social life patterns
+5. Any noteworthy habits or opportunities for improvement
+
+Write a short paragraph (3-4 sentences) followed by 3-5 personalized suggestions. Be positive, actionable, and respectful.`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
