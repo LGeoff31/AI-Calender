@@ -1,41 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# AI Lifestyle Coach for Google Calendar
 
-## Getting Started
+Connect your Google Calendar, press one button, and get a friendly AI-generated snapshot of your habits—plus actionable tips for work, health, and social balance.
 
-First, run the development server:
+## Features
+* 1-click Google sign-in (OAuth 2.0)
+* Reads your events (date range or specific month)
+* Sends them to GPT-4 for a natural-language lifestyle summary
+* Returns JSON: `{ summary, events }` for easy UI rendering
+
+---
+
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/<your-org>/google-calendar-coach.git
+cd google-calendar-coach
+npm install            # or pnpm / yarn
+cp .env.example .env   # add your own keys
+npm run dev            # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Required environment variables (`.env`):
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI= # e.g. http://localhost:3000/api/auth/callback
+OPENAI_API_KEY=
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+---
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+## Key API routes
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Route | Purpose |
+|-------|---------|
+| `GET /api/auth/url` | Returns Google consent URL |
+| `GET /api/auth/callback` | Exchanges code → tokens, stores session |
+| `GET /api/summary` | Pulls events → OpenAI → JSON summary |
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+1. Set the same env vars in Vercel / Render / Fly.io.  
+2. Add the production callback URL to the Google Cloud Console.  
+3. (Optional) Move the OAuth consent screen to **Production** after Google verification so any user can sign in.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Architecture
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
-# AI-Calender
+Client → Server → Google OAuth & Calendar → OpenAI → Server → Client  
+<img width="753" height="535" alt="image" src="https://github.com/user-attachments/assets/2f51f554-518a-408a-8dab-15a0ff57e91c" />
