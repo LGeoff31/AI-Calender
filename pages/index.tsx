@@ -2,6 +2,15 @@ import { useEffect, useState } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { format, parseISO } from "date-fns";
 
+interface GEvent {
+  id?: string;
+  iCalUID?: string;
+  summary?: string;
+  start?: { dateTime?: string; date?: string };
+  end?: { dateTime?: string; date?: string };
+  location?: string;
+}
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -16,7 +25,7 @@ export default function Home() {
   const [status, setStatus] = useState<"loading" | "unauth" | "ready">(
     "loading"
   );
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<GEvent[]>([]);
   const [summary, setSummary] = useState<string | null>(null);
 
   useEffect(() => {
@@ -85,17 +94,18 @@ export default function Home() {
                     <h3 className="text-lg font-medium">
                       {event.summary || "(no title)"}
                     </h3>
-                    {event.start && (
+                    {event.start && event.end && (
                       <p className="text-sm text-gray-500">
-                        {format(
-                          parseISO(event.start.dateTime || event.start.date),
-                          "PP p"
-                        )}
-                        {" – "}
-                        {format(
-                          parseISO(event.end.dateTime || event.end.date),
-                          "PP p"
-                        )}
+                        {(() => {
+                          const startRaw =
+                            event.start?.dateTime || event.start?.date;
+                          const endRaw = event.end?.dateTime || event.end?.date;
+                          if (!startRaw || !endRaw) return null;
+                          return `${format(
+                            parseISO(startRaw),
+                            "PP p"
+                          )} – ${format(parseISO(endRaw), "PP p")}`;
+                        })()}
                       </p>
                     )}
                     {event.location && (

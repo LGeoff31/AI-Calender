@@ -3,6 +3,7 @@ import { google } from "googleapis";
 import { serialize } from "cookie";
 import { randomUUID } from "crypto";
 import { saveTokens } from "../../../lib/session";
+import type { StoredTokens } from "../../../lib/session";
 
 export default async function handler(
   req: NextApiRequest,
@@ -22,7 +23,16 @@ export default async function handler(
   try {
     const { tokens } = await oauth2Client.getToken(code);
     const sessionId = randomUUID();
-    saveTokens(sessionId, tokens as any);
+
+    const stored: StoredTokens = {
+      access_token: tokens.access_token || "",
+      refresh_token: tokens.refresh_token ?? undefined,
+      expiry_date: tokens.expiry_date ?? undefined,
+      scope: tokens.scope ?? undefined,
+      token_type: tokens.token_type ?? undefined,
+    };
+
+    saveTokens(sessionId, stored);
 
     const cookie = serialize("sid", sessionId, {
       httpOnly: true,
