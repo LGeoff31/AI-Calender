@@ -10,6 +10,13 @@ Connect your Google Calendar, press one button, and get a friendly AI-generated 
 
 ---
 
+## Architecture
+
+Client → Server → Google OAuth & Calendar → OpenAI → Server → Client  
+<img width="753" height="535" alt="image" src="https://github.com/user-attachments/assets/2f51f554-518a-408a-8dab-15a0ff57e91c" />
+
+---
+
 ## Quick start
 
 ```bash
@@ -44,10 +51,3 @@ OPENAI_API_KEY=
 1. Set the same env vars in Vercel / Render / Fly.io.  
 2. Add the production callback URL to the Google Cloud Console.  
 3. (Optional) Move the OAuth consent screen to **Production** after Google verification so any user can sign in.
-
----
-
-## Architecture
-
-Client → Server → Google OAuth & Calendar → OpenAI → Server → Client  
-<img width="753" height="535" alt="image" src="https://github.com/user-attachments/assets/2f51f554-518a-408a-8dab-15a0ff57e91c" />
